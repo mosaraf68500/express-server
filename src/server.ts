@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import { Pool } from "pg";
 import path from "path";
 import dotenv from "dotenv";
-dotenv.config({path:path.join(process.cwd(), ".env")});
+dotenv.config({ path: path.join(process.cwd(), ".env") });
 const app = express();
 
 const port = 5000;
@@ -49,13 +49,31 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello World mosarafffffmmmm!");
 });
 
-app.post("/", (req: Request, res: Response) => {
-  console.log(req.body);
+app.post("/users", async(req: Request, res: Response) => {
+  const { name, email } = req.body;
+
+  try {
+    const result=await pool.query(`INSERT INTO users(name,email) VALUES($1,$2) RETURNING *`,[name,email])
+    console.log(result.rows[0]);
+    res.status(201).json({
+      success:true,
+      message:"data inserted successfully!",
+      data:result.rows[0]
+    })
+   
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+
   res.status(201).json({
     success: true,
     message: "api is working",
   });
 });
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
