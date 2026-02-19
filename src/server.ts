@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { Pool } from "pg";
 import path from "path";
 import dotenv from "dotenv";
+import { emit } from "cluster";
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 const app = express();
 
@@ -99,12 +100,12 @@ app.get("/users/:id", async (req: Request, res: Response) => {
         success: false,
         message: "result not found!",
       });
-    }else{
+    } else {
       res.status(200).json({
-        success:true,
-        message:"user found successfully",
-        data:result.rows[0]
-      })
+        success: true,
+        message: "user found successfully",
+        data: result.rows[0],
+      });
     }
   } catch (err: any) {
     res.status(500).json({
@@ -114,6 +115,33 @@ app.get("/users/:id", async (req: Request, res: Response) => {
   }
 });
 
+app.put("/users/:id", async (req: Request, res: Response) => {
+  try {
+    const { name, email } = req.body;
+    const result = await pool.query(
+      `UPDATE users SET name=$1,email=$2 WHERE id=$3 RETURNING *`,
+      [name, email, req.params.id],
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "result not found!",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "user found successfully",
+        data: result.rows[0],
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
