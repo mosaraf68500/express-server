@@ -49,29 +49,69 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello World mosarafffffmmmm!");
 });
 
-app.post("/users", async(req: Request, res: Response) => {
+// users crud
+app.post("/users", async (req: Request, res: Response) => {
   const { name, email } = req.body;
 
   try {
-    const result=await pool.query(`INSERT INTO users(name,email) VALUES($1,$2) RETURNING *`,[name,email])
+    const result = await pool.query(
+      `INSERT INTO users(name,email) VALUES($1,$2) RETURNING *`,
+      [name, email],
+    );
     console.log(result.rows[0]);
     res.status(201).json({
-      success:true,
-      message:"data inserted successfully!",
-      data:result.rows[0]
-    })
-   
+      success: true,
+      message: "data inserted successfully!",
+      data: result.rows[0],
+    });
   } catch (error: any) {
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
+});
 
-  res.status(201).json({
-    success: true,
-    message: "api is working",
-  });
+app.get("/users", async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`SELECT * FROM users`);
+    res.status(200).json({
+      success: true,
+      message: "data fetching successfully!",
+      data: result.rows,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+app.get("/users/:id", async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`SELECT * FROM users WHERE id=$1`, [
+      req.params.id,
+    ]);
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "result not found!",
+      });
+    }else{
+      res.status(200).json({
+        success:true,
+        message:"user found successfully",
+        data:result.rows[0]
+      })
+    }
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 });
 
 app.listen(port, () => {
